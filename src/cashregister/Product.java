@@ -1,4 +1,4 @@
-package Kassasystem;
+package cashregister;
 
 public class Product {
     private String name;
