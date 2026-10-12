@@ -18,7 +18,10 @@ public class CashRegister extends JFrame {
     double grandTotal = 0.0;
 
     //Instantvariabel för textfältet så att båda hjälpmetoderna kan nå det
+
     JTextField displayField = new JTextField(15);
+    JTextField inputField = new JTextField("1", 5);
+    JTextArea receiptArea = new JTextArea();
 
     // Skapar huvudfönstret centrerad på skärmen
     public CashRegister() {
@@ -34,7 +37,6 @@ public class CashRegister extends JFrame {
         JPanel bottomPanel = createBottomPanel();
 
         //Skapar kvittoområdet till höger
-        JTextArea receiptArea = new JTextArea();
         receiptArea.setEditable(false);
         receiptArea.setFont(new Font("Monospaced", Font.PLAIN,12));
 
@@ -54,22 +56,45 @@ public class CashRegister extends JFrame {
         bottomPanel.setBackground(Color.BLACK);
 
         //Användaren kan inte skriva i det manuellt
-       displayField.setEditable(false);
+        displayField.setEditable(false);
 
         JLabel label = new JLabel("Quantity: ");
         label.setForeground(Color.WHITE);
 
-        JTextField inputField = new JTextField("1", 5);
-
         JButton addButton = new JButton("Add");
         JButton payButton = new JButton("Pay");
 
-        bottomPanel.add(displayField);
-        bottomPanel.add(label);
-        bottomPanel.add(inputField);
-        bottomPanel.add(addButton);
-        bottomPanel.add(payButton);
-        return bottomPanel;
+        // Hanterar klick på Add button: kollar om produkt är vald, validerar antalet, räknar ut priset och lägger till på kvittot.
+
+        addButton.addActionListener(e ->{
+            if (selectedProduct == null){
+                JOptionPane.showMessageDialog(this, "Please select a product first!");
+                return;
+            }
+            try {
+                int quantity = Integer.parseInt((inputField.getText().trim()));
+
+                if (quantity <= 0) {
+                    JOptionPane.showMessageDialog(this, "Quantity must be greater than 0!");
+                    return;
+                }
+                double lineTotal = selectedProduct.getPrice() * quantity;
+                grandTotal += lineTotal;
+
+                String line = String.format("%-15s %2d x %6.2f kr = %7.2f kr\n",
+                        selectedProduct.getName(), quantity, selectedProduct.getPrice(), lineTotal);
+                receiptArea.append(line);
+            } catch (NumberFormatException ex) {
+                JOptionPane.showMessageDialog(this, "Please enter a valid number of quantity!");
+            }
+        });
+
+            bottomPanel.add(displayField);
+            bottomPanel.add(label);
+            bottomPanel.add(inputField);
+            bottomPanel.add(addButton);
+            bottomPanel.add(payButton);
+            return bottomPanel;
     }
         // Hjälpmetod för att skapa mittpanelen och koppla listeners
         JPanel createCenterPanel() {
