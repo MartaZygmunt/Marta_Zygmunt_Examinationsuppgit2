@@ -89,6 +89,25 @@ public class CashRegister extends JFrame {
             }
         });
 
+            payButton.addActionListener(e -> {
+                if (grandTotal == 0) {
+                    JOptionPane.showMessageDialog(this, "Receipt is empty!", "Warning", JOptionPane.WARNING_MESSAGE);
+                    return;
+                }
+
+                receiptArea.append("--------------------------------------\n");
+                receiptArea.append(String.format("TOTAL: %30.2f kr\n", grandTotal));
+                receiptArea.append("THANK YOU FOR YOUR PURCHASE!\n\n");
+
+                JOptionPane.showMessageDialog(this, String.format("Thank you! Have a nice day! Total: %.2f kr", grandTotal));
+
+                grandTotal = 0.0;
+                selectedProduct = null;
+                displayField.setText("");
+                inputField.setText("1");
+                receiptArea.setText("");
+            });
+
             bottomPanel.add(displayField);
             bottomPanel.add(label);
             bottomPanel.add(inputField);
