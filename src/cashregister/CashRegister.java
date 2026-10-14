@@ -2,6 +2,7 @@ package cashregister;
 
 import javax.swing.*;
 import java.awt.*;
+import java.awt.event.*;
 
 public class CashRegister extends JFrame {
 
@@ -23,6 +24,12 @@ public class CashRegister extends JFrame {
     JTextField inputField = new JTextField("1", 5);
     JTextArea receiptArea = new JTextArea();
 
+    //Huvudpanel för hela fönstret
+    JPanel mainPanel = new JPanel(new BorderLayout());
+
+    // Panel för vänster sida (håller ihop knappar och det svarta fältet)
+    JPanel leftPanel = new JPanel(new BorderLayout());
+
     // Skapar huvudfönstret centrerad på skärmen
     public CashRegister() {
         setTitle("MARTAS Cash Register");
@@ -30,11 +37,9 @@ public class CashRegister extends JFrame {
         setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         setLocationRelativeTo(null);
 
-        JPanel mainPanel = new JPanel(new BorderLayout());
-
-        // Skapar panelerna med hjälpmetoder
-        JPanel centerPanel = createCenterPanel();
-        JPanel bottomPanel = createBottomPanel();
+        // Skapar och lägger till paneler via void metoder i leftPanel
+         createCenterPanel();
+         createBottomPanel();
 
         //Skapar kvittoområdet till höger
         receiptArea.setEditable(false);
@@ -43,17 +48,17 @@ public class CashRegister extends JFrame {
         JScrollPane scrollPane = new JScrollPane(receiptArea);
         scrollPane.setPreferredSize(new Dimension(350,0));
 
-       //Lägger till alla delar i huvudpanelen
-        mainPanel.add(centerPanel, BorderLayout.CENTER);
-        mainPanel.add(bottomPanel, BorderLayout.SOUTH);
-        mainPanel.add(scrollPane, BorderLayout.EAST);
+        //Lägger till vänstra sidan i mitten och kvittot till höger i huvudpanelen
+        mainPanel.add(leftPanel,BorderLayout.CENTER);
+        mainPanel.add(scrollPane,BorderLayout.EAST);
 
         add(mainPanel);
     }
         // Hjälpmetod för att skapa den nedre panelen
-        JPanel createBottomPanel() {
-        JPanel bottomPanel = new JPanel(new FlowLayout(FlowLayout.LEFT,10,10));
+        void createBottomPanel() {
+        JPanel bottomPanel = new JPanel(new FlowLayout(FlowLayout.LEFT,20,15));
         bottomPanel.setBackground(Color.BLACK);
+        bottomPanel.setPreferredSize(new Dimension(0, 65));
 
         //Användaren kan inte skriva i det manuellt
         displayField.setEditable(false);
@@ -65,12 +70,12 @@ public class CashRegister extends JFrame {
         JButton payButton = new JButton("Pay");
 
         // Hanterar klick på Add button: kollar om produkt är vald, validerar antalet, räknar ut priset och lägger till på kvittot.
-
-        addButton.addActionListener(e ->{
+            addButton.addActionListener(e ->{
             if (selectedProduct == null){
                 JOptionPane.showMessageDialog(this, "Please select a product first!");
                 return;
             }
+            // Try catch skyddar programmet mot krasch om användaren skriver bokstäver i stället för siffror
             try {
                 int quantity = Integer.parseInt((inputField.getText().trim()));
 
@@ -89,13 +94,14 @@ public class CashRegister extends JFrame {
             }
         });
 
+            // Hanterar klick på Pay button:
             payButton.addActionListener(e -> {
                 if (grandTotal == 0) {
                     JOptionPane.showMessageDialog(this, "Receipt is empty!", "Warning", JOptionPane.WARNING_MESSAGE);
                     return;
                 }
 
-                receiptArea.append("--------------------------------------\n");
+                receiptArea.append("------------------------------------------------\n");
                 receiptArea.append(String.format("TOTAL: %30.2f kr\n", grandTotal));
                 receiptArea.append("THANK YOU FOR YOUR PURCHASE!\n\n");
 
@@ -113,10 +119,13 @@ public class CashRegister extends JFrame {
             bottomPanel.add(inputField);
             bottomPanel.add(addButton);
             bottomPanel.add(payButton);
-            return bottomPanel;
-    }
+
+            // Lägger till det svarta fältet längst ner i vänsterpanelen
+            leftPanel.add(bottomPanel, BorderLayout.SOUTH);
+        }
+
         // Hjälpmetod för att skapa mittpanelen och koppla listeners
-        JPanel createCenterPanel() {
+        void createCenterPanel() {
         JPanel centerPanel = new JPanel(new FlowLayout(FlowLayout.LEFT,10, 10));
         centerPanel.setBackground(Color.ORANGE);
 
@@ -159,7 +168,10 @@ public class CashRegister extends JFrame {
             centerPanel.add(button4);
             centerPanel.add(button5);
             centerPanel.add(button6);
-            return centerPanel;
+
+            // Placerar mittpanelen i mitten av vänsterpanelen för att bygga upp layouten korrekt
+            leftPanel.add(centerPanel, BorderLayout.CENTER);
+
         }
 
     public static void main(String[] args) {
