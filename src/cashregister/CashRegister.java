@@ -6,31 +6,26 @@ import java.awt.event.*;
 
 public class CashRegister extends JFrame {
 
-    //Skapar produktobjekt med namn och pris
-    Product product1 = new Product("Apple", 36.78);
-    Product product2 = new Product("Cake", 66.77);
-    Product product3 = new Product("Cheese", 25.00);
-    Product product4 = new Product("Bread", 15.00);
-    Product product5 = new Product("Butter", 22.00);
-    Product product6 = new Product("Wine", 40.00);
+    //  Skapar produktobjekt med namn, pris och moms (%)
+    Product product1 = new Product("Apple", 36.78, 12.0);
+    Product product2 = new Product("Cake", 66.77, 25.0);
+    Product product3 = new Product("Cheese", 25.00, 12.0);
+    Product product4 = new Product("Bread", 15.00, 12.0);
+    Product product5 = new Product("Butter", 22.00, 12.0);
+    Product product6 = new Product("Wine", 40.00, 25.0);
 
-    // Variabler för att spara den valda produkten och totalsumman
     Product selectedProduct;
-    double grandTotal = 0.0;
-
-    //Instantvariabel för textfältet så att båda hjälpmetoderna kan nå det
+    Receipt currentReceipt = new Receipt();
 
     JTextField displayField = new JTextField(15);
     JTextField inputField = new JTextField("1", 5);
     JTextArea receiptArea = new JTextArea();
 
-    //Huvudpanel för hela fönstret
-    JPanel mainPanel = new JPanel(new BorderLayout());
 
-    // Panel för vänster sida (håller ihop knappar och det svarta fältet)
+    JPanel mainPanel = new JPanel(new BorderLayout());
     JPanel leftPanel = new JPanel(new BorderLayout());
 
-    // Skapar huvudfönstret centrerad på skärmen
+    //  Skapar huvudfönstret centrerad på skärmen
     public CashRegister() {
         setTitle("MARTAS Cash Register");
         setSize(900, 500);
@@ -38,8 +33,8 @@ public class CashRegister extends JFrame {
         setLocationRelativeTo(null);
 
         // Skapar och lägger till paneler via void metoder i leftPanel
-         createCenterPanel();
-         createBottomPanel();
+        createCenterPanel();
+        createBottomPanel();
 
         //Skapar kvittoområdet till höger
         receiptArea.setEditable(false);
@@ -54,7 +49,55 @@ public class CashRegister extends JFrame {
 
         add(mainPanel);
     }
-        // Hjälpmetod för att skapa den nedre panelen
+
+    // Hjälpmetod för att skapa mittpanelen och koppla listeners
+    void createCenterPanel() {
+        JPanel centerPanel = new JPanel(new FlowLayout(FlowLayout.LEFT,10, 10));
+        centerPanel.setBackground(Color.ORANGE);
+
+        JButton button1 = new JButton("Apple");
+        JButton button2 = new JButton("Cake");
+        JButton button3 = new JButton("Cheese");
+        JButton button4 = new JButton("Bread");
+        JButton button5 = new JButton("Butter");
+        JButton button6 = new JButton("Wine");
+
+        button1.addActionListener(e -> {
+            selectedProduct = product1;
+            displayField.setText("Apple");
+        });
+        button2.addActionListener(e -> {
+            selectedProduct = product2;
+            displayField.setText("Cake");
+        });
+        button3.addActionListener(e -> {
+            selectedProduct = product3;
+            displayField.setText("Cheese");
+        });
+        button4.addActionListener(e -> {
+            selectedProduct = product4;
+            displayField.setText("Bread");
+        });
+        button5.addActionListener(e -> {
+            selectedProduct = product5;
+            displayField.setText("Butter");
+        });
+        button6.addActionListener(e -> {
+            selectedProduct = product6;
+            displayField.setText("Wine");
+        });
+
+        centerPanel.add(button1);
+        centerPanel.add(button2);
+        centerPanel.add(button3);
+        centerPanel.add(button4);
+        centerPanel.add(button5);
+        centerPanel.add(button6);
+
+        leftPanel.add(centerPanel, BorderLayout.CENTER);
+    }
+
+        // Hjälpmetod för att skapa den nedre panelen med inmatning och funktioner
         void createBottomPanel() {
         JPanel bottomPanel = new JPanel(new FlowLayout(FlowLayout.LEFT,20,15));
         bottomPanel.setBackground(Color.BLACK);
@@ -83,31 +126,76 @@ public class CashRegister extends JFrame {
                     JOptionPane.showMessageDialog(this, "Quantity must be greater than 0!");
                     return;
                 }
-                double lineTotal = selectedProduct.getPrice() * quantity;
-                grandTotal += lineTotal;
+                ReceiptRow row = new ReceiptRow(selectedProduct, quantity);
+                currentReceipt.addRow(row);
+                double lineTotal = row.getTotalprice();
 
                 String line = String.format("%-15s %2d x %6.2f kr = %7.2f kr\n",
                         selectedProduct.getName(), quantity, selectedProduct.getPrice(), lineTotal);
                 receiptArea.append(line);
+                receiptArea.append(String.format("Total: %6.2f kr\n", currentReceipt.getTotalSum()));
+
             } catch (NumberFormatException ex) {
                 JOptionPane.showMessageDialog(this, "Please enter a valid number of quantity!");
             }
         });
 
-            // Hanterar klick på Pay button:
+            // Slutför köpet, räknar ut moms (12 % och 25 %) och skriver ut kvittot
             payButton.addActionListener(e -> {
-                if (grandTotal == 0) {
+
+                if (currentReceipt.getRows().isEmpty()) {
                     JOptionPane.showMessageDialog(this, "Receipt is empty!", "Warning", JOptionPane.WARNING_MESSAGE);
                     return;
                 }
 
+                double moms12 = 0;
+                double netto12 = 0;
+                double brutto12 = 0;
+
+                double moms25 = 0;
+                double netto25 = 0;
+                double brutto25 = 0;
+
+
+                for (ReceiptRow row : currentReceipt.getRows()) {
+                    double rowTotal = row.getTotalprice();
+                    double rowMoms = row.getMoms();
+                    double rowNetto = rowTotal - rowMoms;
+
+                    if (row.getProduct().getMoms() == 12.0) {
+                        moms12 += rowMoms;
+                        netto12 += rowNetto;
+                        brutto12 += rowTotal;
+
+                    } else if (row.getProduct().getMoms() == 25.0) {
+                        moms25 += rowMoms;
+                        netto25 += rowNetto;
+                        brutto25 += rowTotal;
+                    }
+                }
                 receiptArea.append("------------------------------------------------\n");
-                receiptArea.append(String.format("TOTAL: %30.2f kr\n", grandTotal));
+                receiptArea.append(String.format("RECEIPT NR: %d\n", currentReceipt.getReceiptNumber()));
+                receiptArea.append("------------------------------------------------\n");
+                receiptArea.append(String.format("%-10s %10s %10s %10s\n", "Moms%", "Moms", "Netto", "Brutto"));
+
+                // Skriver ut raden för 12% om den har använts
+                if (brutto12 > 0) {
+                    receiptArea.append(String.format("%6.2f     %10.2f %10.2f %10.2f\n", 12.0, moms12, netto12, brutto12));
+                }
+
+                // Skriver ut raden för 25% om den har använts
+                if (brutto25 > 0) {
+                    receiptArea.append(String.format("%6.2f     %10.2f %10.2f %10.2f\n", 25.0, moms25, netto25, brutto25));
+                }
+
+                receiptArea.append("------------------------------------------------\n");
+                receiptArea.append(String.format("TOTAL SUMMA: %16.2f kr\n",currentReceipt.getTotalSum()));
+                receiptArea.append(String.format("TOTAL MOMS: %17.2f kr\n",currentReceipt.getTotalMoms()));
                 receiptArea.append("THANK YOU FOR YOUR PURCHASE!\n\n");
 
-                JOptionPane.showMessageDialog(this, String.format("Thank you! Have a nice day! Total: %.2f kr", grandTotal));
+                JOptionPane.showMessageDialog(leftPanel, String.format("Thank you! Please don't check your bank balance today!\nTotal: %.2f kr", currentReceipt.getTotalSum()));
 
-                grandTotal = 0.0;
+                currentReceipt = new Receipt();
                 selectedProduct = null;
                 displayField.setText("");
                 inputField.setText("1");
@@ -124,57 +212,7 @@ public class CashRegister extends JFrame {
             leftPanel.add(bottomPanel, BorderLayout.SOUTH);
         }
 
-        // Hjälpmetod för att skapa mittpanelen och koppla listeners
-        void createCenterPanel() {
-        JPanel centerPanel = new JPanel(new FlowLayout(FlowLayout.LEFT,10, 10));
-        centerPanel.setBackground(Color.ORANGE);
-
-        JButton button1 = new JButton("Apple");
-        JButton button2 = new JButton("Cake");
-        JButton button3 = new JButton("Cheese");
-        JButton button4 = new JButton("Bread");
-        JButton button5 = new JButton("Butter");
-        JButton button6 = new JButton("Wine");
-
-        //Kopplar funktioner till knapparna: sparar produkten och visar namnet i textfältet
-            button1.addActionListener(e -> {
-                selectedProduct = product1;
-                displayField.setText("Apple");
-            });
-            button2.addActionListener(e -> {
-                selectedProduct = product2;
-                displayField.setText("Cake");
-            });
-            button3.addActionListener(e -> {
-                selectedProduct = product3;
-                displayField.setText("Cheese");
-            });
-            button4.addActionListener(e -> {
-                selectedProduct = product4;
-                displayField.setText("Bread");
-            });
-            button5.addActionListener(e -> {
-                selectedProduct = product5;
-                displayField.setText("Butter");
-            });
-            button6.addActionListener(e -> {
-                selectedProduct = product6;
-                displayField.setText("Wine");
-            });
-
-            centerPanel.add(button1);
-            centerPanel.add(button2);
-            centerPanel.add(button3);
-            centerPanel.add(button4);
-            centerPanel.add(button5);
-            centerPanel.add(button6);
-
-            // Placerar mittpanelen i mitten av vänsterpanelen för att bygga upp layouten korrekt
-            leftPanel.add(centerPanel, BorderLayout.CENTER);
-
-        }
-
-    public static void main(String[] args) {
+        public static void main(String[] args) {
         CashRegister window = new CashRegister();
         window.setVisible(true);
     }
